@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100">
+
+  <nav class="bg-blue-700 p-4 text-white flex justify-between items-center">
+    <h1 class="text-2xl font-bold">Admin Dashboard</h1>
+    <button onclick="logout()" class="bg-red-500 px-4 py-2 rounded">Logout</button>
+  </nav>
+
+  <div class="max-w-7xl mx-auto p-6 bg-white mt-6 rounded shadow">
+    <div class="mb-4">
+      <input type="text" id="search" placeholder="Search users..." class="border p-2 rounded w-full"/>
+    </div>
+    
+    <table class="w-full table-auto border-collapse">
+      <thead class="bg-gray-200">
+        <tr>
+          <th class="p-2">Name</th>
+          <th class="p-2">Email</th>
+          <th class="p-2">Role</th>
+          <th class="p-2">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="user-list"></tbody>
+    </table>
+  </div>
+
+  <div class="mt-10 bg-white shadow rounded p-4">
+    <h2 class="text-xl font-bold mb-4 text-gray-700">User Upload Activity</h2>
+    <canvas id="uploadChart" height="100"></canvas>
+</div>
+
+  <!-- Modal for preview -->
+  <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+    <div class="bg-white p-4 rounded shadow max-w-3xl w-full">
+      <button onclick="closeModal()" class="float-right text-red-600">Close</button>
+      <div id="previewContent" class="mt-4"></div>
+    </div>
+  </div>
+
+  <script>
+    const BACKEND = "http://127.0.0.1:5000";
+
+    async function loadUsers() {
+      const searchQuery = document.getElementById("search").value.toLowerCase();
+      const res = await fetch(`${BACKEND}/get_all_users`);
+      const users = await res.json();
+      const userList = document.getElementById("user-list");
+      userList.innerHTML = "";
+
+      users
+        .filter(u => u.email.toLowerCase().includes(searchQuery))
+        .forEach(user => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="border p-2">${user.fullname || "N/A"}</td>
+            <td class="border p-2">${user.email}</td>
+            <td class="border p-2">${user.role}</td>
+            <td class="border p-2">
+              <button onclick="editUser('${user.uid}')" class="bg-green-500 text-white px-2 py-1 rounded">Edit</button>
+              <button onclick="deleteUser('${user.uid}')" class="bg-red-500 text-white px-2 py-1 rounded">Delete</button>
+              <button onclick="viewUploads('${user.uid}')" class="bg-blue-500 text-white px-2 py-1 rounded">View Uploads</button>
+            </td>
+          `;
+          userList.appendChild(tr);
+        });
+    }
+
+    function editUser(uid) {
+      const newRole = prompt("Enter new role (admin/user):");
+      if (newRole) {
+        fetch(`${BACKEND}/assign_role/${uid}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role: newRole })
+        }).then(loadUsers);
+      }
+    }
+
+    function deleteUser(uid) {
+      if (confirm("Delete this user?")) {
+        fetch(`${BACKEND}/delete_user/${uid}`, { method: "DELETE" })
+          .then(loadUsers);
+      }
+    }
+
+    async function viewUploads(uid) {
+      const res = await fetch(`${BACKEND}/get_user_uploads/${uid}`);
+      const uploads = await res.json();
+      const preview = document.getElementById("previewContent");
+      preview.innerHTML = "<h2 class='text-xl mb-4 font-semibold'>User Uploads</h2>";
+
+      if (uploads.length === 0) {
+        preview.innerHTML += "<p>No uploads found.</p>";
+      }
+
+      uploads.forEach(file => {
+        const fileType = file.content_type;
+        let previewElement;
+
+        if (fileType.startsWith("image/")) {
+          previewElement = `<img src="${BACKEND}/file/preview/${file.file_id}" class="max-h-64 rounded mb-4"/>`;
+        } else if (fileType === "application/pdf") {
+          previewElement = `<iframe src="${BACKEND}/file/preview/${file.file_id}" class="w-full h-64 mb-4"></iframe>`;
+        } else if (fileType.startsWith("video/")) {
+          previewElement = `<video controls class="w-full max-h-64 mb-4"><source src="${BACKEND}/file/preview/${file.file_id}" type="${fileType}"></video>`;
+        } else {
+          previewElement = `<p class="text-sm text-gray-600">Cannot preview ${file.filename}</p>`;
+        }
+
+        preview.innerHTML += `<div class="border-t pt-2">${previewElement}</div>`;
+      });
+
+      document.getElementById("previewModal").classList.remove("hidden");
+      document.getElementById("previewModal").classList.add("flex");
+    }
+
+    function closeModal() {
+      document.getElementById("previewModal").classList.add("hidden");
+    }
+
+    function logout() {
+      fetch("/logout").then(() => {
+        window.location.href = "/";
+      });
+    }
+
+    document.getElementById("search").addEventListener("input", loadUsers);
+    window.onload = loadUsers;
+
+    async function loadChart() {
+    const res = await fetch('/analytics/uploads_over_time');
+    const chartData = await res.json();
+
+    const ctx = document.getElementById('uploadChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartData.labels,
+            datasets: chartData.datasets
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'User Uploads Over Time'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Call after user auth check
+auth.onAuthStateChanged(async (user) => {
+    if (user) {
+        const idTokenResult = await user.getIdTokenResult();
+        if (idTokenResult.claims.role === "admin") {
+            loadUsers();
+            loadChart();  // Load chart after loading users
+        }
+    }
+});
+  </script>
+</body>
+</html>
