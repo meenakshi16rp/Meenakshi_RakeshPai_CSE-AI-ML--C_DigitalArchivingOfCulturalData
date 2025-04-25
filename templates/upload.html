@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>File Upload System</title>
+  <link rel="stylesheet" href="/static/css/upload.css" />
+  <style>
+    #uploadButton,
+    .metadata-form,
+    #postButton,
+    #uploadMessage {
+      display: none;
+    }
+
+    .image-preview {
+      max-width: 200px;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+
+    .file-preview {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <a href="#">Home</a>
+    <a href="#">Upload</a>
+    <a href="#">Gallery</a>
+    <a href="#">Contact</a>
+  </div>
+
+  <div class="upload-container">
+    <!-- File selection -->
+    <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+      <p id="selected-filename">📂 Click to Upload Files</p>
+    </div>
+    <input type="file" id="fileInput" hidden onchange="handleFile()" />
+
+    <!-- Upload Button (only appears after file select) -->
+    <button id="uploadButton" onclick="analyzeFile()">Analyze & Preview</button>
+
+    <!-- File Preview -->
+    <div id="previewArea"></div>
+
+    <!-- Metadata Form (shown after analysis) -->
+    <div class="metadata-form">
+      <label>Title</label>
+      <input type="text" id="title" placeholder="Enter title here" />
+
+      <label>Brief Description</label>
+      <textarea id="description" placeholder="Describe the material"></textarea>
+
+      <label>Date of Uploading</label>
+      <input type="text" id="uploadDate" readonly />
+
+      <label>Language</label>
+      <input type="text" id="language" placeholder="Enter language" />
+
+      <label>State (if any)</label>
+      <input type="text" id="state" placeholder="Enter state affiliation" />
+
+      <label>User Uploading</label>
+      <input type="text" id="user" readonly />
+
+      <label>Category</label>
+      <input type="text" id="category" placeholder="Enter category" />
+
+      <label>Subject Tags (max 10)</label>
+      <input type="text" id="tags" placeholder="Add relevant tags" />
+    </div>
+
+    <!-- Final Post Button -->
+    <button id="postButton" onclick="uploadWithMetadata()">Post to Gallery</button>
+    <p id="uploadMessage">File Uploaded ✅</p>
+
+    <!-- File Listing -->
+    <div class="file-preview" id="fileList"></div>
+  </div>
+
+  <script>
+    const API_URL = "http://127.0.0.1:5000";
+
+    window.onload = async function () {
+      const today = new Date();
+      document.getElementById("uploadDate").value = today.toLocaleDateString();
+      loadFiles();
+
+      // Fetch user info from session
+      try {
+        const response = await fetch(`${API_URL}/sessionInfo`);
+        const data = await response.json();
+        document.getElementById("user").value = data.fullname || data.email || "Unknown User";
+      } catch (err) {
+        document.getElementById("user").value = "Unknown User";
+      }
+    };
+
+    function handleFile() {
+      const fileInput = document.getElementById("fileInput");
+      if (fileInput.files.length > 0) {
+        document.getElementById("selected-filename").innerText = fileInput.files[0].name;
+        document.getElementById("uploadButton").style.display = "inline-block";
+      }
+    }
+
+    function analyzeFile() {
+  const input = document.getElementById("fileInput");
+  if (input.files.length === 0) return;
+
+  const file = input.files[0];
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const previewArea = document.getElementById("previewArea");
+  previewArea.innerHTML = "";
+
+  if (file.type.startsWith("image/")) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      previewArea.innerHTML = `<img src="${e.target.result}" class="image-preview" />`;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  fetch(`${API_URL}/analyze-image`, {
+    method: "POST",
+    body: formData
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.title) {
+        document.getElementById("title").value = data.title;
+      }
+      if (data.description) {
+        document.getElementById("description").value = data.description;
+      }
+      document.querySelector(".metadata-form").style.display = "block";
+      document.getElementById("postButton").style.display = "inline-block";
+    })
+    .catch(error => {
+      console.error("Error analyzing image:", error);
+    });
+}
+
+    async function uploadWithMetadata() {
+      const fileInput = document.getElementById("fileInput");
+      if (!fileInput.files.length) {
+        alert("Please select a file!");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+      formData.append("title", document.getElementById("title").value);
+      formData.append("description", document.getElementById("description").value);
+      formData.append("date", document.getElementById("uploadDate").value);
+      formData.append("language", document.getElementById("language").value);
+      formData.append("state", document.getElementById("state").value);
+      formData.append("user", document.getElementById("user").value);
+      formData.append("category", document.getElementById("category").value);
+      formData.append("tags", document.getElementById("tags").value);
+
+      try {
+        const response = await fetch(`${API_URL}/files/post`, {
+          method: "POST",
+          body: formData
+        });
+
+        if (response.ok) {
+          document.getElementById("uploadMessage").style.display = "block";
+          alert("File and details uploaded!");
+          loadFiles();
+        } else {
+          alert("Upload failed");
+        }
+      } catch (error) {
+        console.error("Error uploading file:", error);
+      }
+    }
+
+    async function loadFiles() {
+      const fileList = document.getElementById("fileList");
+      fileList.innerHTML = "";
+
+      try {
+        const response = await fetch(`${API_URL}/files/list`);
+        const files = await response.json();
+
+        files.forEach(file => {
+          const div = document.createElement("div");
+          let preview = "";
+
+          if (file.filename.match(/\.(jpg|png|gif)$/i)) {
+            preview = `<img src="${API_URL}/files/download/${file.file_id}" class="image-preview" />`;
+          } else if (file.filename.match(/\.(mp4|avi|mov)$/i)) {
+            preview = `<video class="video-preview" controls>
+                        <source src="${API_URL}/files/download/${file.file_id}" />
+                      </video>`;
+          }
+
+          div.innerHTML = `
+            <div>
+              ${preview}
+              <p>${file.filename}</p>
+              <button onclick="downloadFile('${file.file_id}')">Download</button>
+              <button onclick="deleteFile('${file.file_id}')">Delete</button>
+            </div>
+          `;
+
+          fileList.appendChild(div);
+        });
+      } catch (error) {
+        console.error("Error loading gallery:", error);
+      }
+    }
+
+    function downloadFile(fileId) {
+      window.location.href = `${API_URL}/files/download/${fileId}`;
+    }
+
+    async function deleteFile(fileId) {
+      if (!confirm("Are you sure you want to delete this file?")) return;
+
+      try {
+        const response = await fetch(`${API_URL}/files/delete/${fileId}`, {
+          method: "DELETE",
+        });
+
+        if (response.ok) {
+          alert("File deleted successfully!");
+          loadFiles();
+        } else {
+          alert("Deletion failed");
+        }
+      } catch (error) {
+        console.error("Error deleting file:", error);
+      }
+    }
+  </script>
+</body>
+</html>
