@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>File Upload System</title>
   <link rel="stylesheet" href="/static/css/upload.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap">
   <style>
     #uploadButton,
     .metadata-form,
     #postButton,
-    #uploadMessage {
+    #uploadMessage,
+    #viewGalleryButton {
       display: none;
     }
 
@@ -22,30 +24,44 @@
     .file-preview {
       margin-top: 20px;
     }
+
+    #viewGalleryButton {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #viewGalleryButton:hover {
+      background-color: #45a049;
+    } 
+    
   </style>
 </head>
 <body>
   <div class="navbar">
-    <a href="#">Home</a>
-    <a href="#">Upload</a>
-    <a href="#">Gallery</a>
-    <a href="#">Contact</a>
+    <a href="/">Home</a>
+    <a href="/upload">Upload</a>
+    <a href="/gallery">Gallery</a>
+    <a href="/logout">Logout</a>
   </div>
 
   <div class="upload-container">
-    <!-- File selection -->
+    <!-- File Selection -->
     <div class="upload-box" onclick="document.getElementById('fileInput').click()">
       <p id="selected-filename">📂 Click to Upload Files</p>
     </div>
     <input type="file" id="fileInput" hidden onchange="handleFile()" />
 
-    <!-- Upload Button (only appears after file select) -->
+    <!-- Analyze Button -->
     <button id="uploadButton" onclick="analyzeFile()">Analyze & Preview</button>
 
     <!-- File Preview -->
     <div id="previewArea"></div>
 
-    <!-- Metadata Form (shown after analysis) -->
+    <!-- Metadata Form -->
     <div class="metadata-form">
       <label>Title</label>
       <input type="text" id="title" placeholder="Enter title here" />
@@ -66,15 +82,27 @@
       <input type="text" id="user" readonly />
 
       <label>Category</label>
-      <input type="text" id="category" placeholder="Enter category" />
+      <select id="category">
+      <option value="art">Art</option>
+      <option value="music">Music</option>
+      <option value="dance">Dance</option>
+      <option value="literature">Literature</option>
+      <option value="sculpture">Sculpture</option>
+      <option value="Accesories">Accessories</option>
+      <option value="other">Other</option>
+      </select>
+
 
       <label>Subject Tags (max 10)</label>
       <input type="text" id="tags" placeholder="Add relevant tags" />
     </div>
 
-    <!-- Final Post Button -->
+    <!-- Upload and Post -->
     <button id="postButton" onclick="uploadWithMetadata()">Post to Gallery</button>
-    <p id="uploadMessage">File Uploaded ✅</p>
+    <p id="uploadMessage">✅ File Uploaded Successfully!</p>
+
+    <!-- View in Gallery Button -->
+    <button id="viewGalleryButton" onclick="redirectToGallery()">View in Gallery</button>
 
     <!-- File Listing -->
     <div class="file-preview" id="fileList"></div>
@@ -88,7 +116,6 @@
       document.getElementById("uploadDate").value = today.toLocaleDateString();
       loadFiles();
 
-      // Fetch user info from session
       try {
         const response = await fetch(`${API_URL}/sessionInfo`);
         const data = await response.json();
@@ -107,48 +134,43 @@
     }
 
     function analyzeFile() {
-  const input = document.getElementById("fileInput");
-  if (input.files.length === 0) return;
+      const input = document.getElementById("fileInput");
+      if (input.files.length === 0) return;
 
-  const file = input.files[0];
-  const formData = new FormData();
-  formData.append("file", file);
+      const file = input.files[0];
+      const formData = new FormData();
+      formData.append("file", file);
 
-  const previewArea = document.getElementById("previewArea");
-  previewArea.innerHTML = "";
+      const previewArea = document.getElementById("previewArea");
+      previewArea.innerHTML = "";
 
-  if (file.type.startsWith("image/")) {
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      previewArea.innerHTML = `<img src="${e.target.result}" class="image-preview" />`;
-    };
-    reader.readAsDataURL(file);
-  }
-
-  fetch(`${API_URL}/analyze-image`, {
-    method: "POST",
-    body: formData
-  })
-    .then(response => response.json())
-    .then(data => {
-      if (data.title) {
-        document.getElementById("title").value = data.title;
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          previewArea.innerHTML = `<img src="${e.target.result}" class="image-preview" />`;
+        };
+        reader.readAsDataURL(file);
       }
-      if (data.description) {
-        document.getElementById("description").value = data.description;
-      }
-      document.querySelector(".metadata-form").style.display = "block";
-      document.getElementById("postButton").style.display = "inline-block";
-    })
-    .catch(error => {
-      console.error("Error analyzing image:", error);
-    });
-}
+
+      fetch(`${API_URL}/analyze-image`, {
+        method: "POST",
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.title) document.getElementById("title").value = data.title;
+        if (data.description) document.getElementById("description").value = data.description;
+
+        document.querySelector(".metadata-form").style.display = "block";
+        document.getElementById("postButton").style.display = "inline-block";
+      })
+      .catch(error => console.error("Error analyzing image:", error));
+    }
 
     async function uploadWithMetadata() {
       const fileInput = document.getElementById("fileInput");
       if (!fileInput.files.length) {
-        alert("Please select a file!");
+        alert("Please select a file first!");
         return;
       }
 
@@ -171,7 +193,8 @@
 
         if (response.ok) {
           document.getElementById("uploadMessage").style.display = "block";
-          alert("File and details uploaded!");
+          document.getElementById("viewGalleryButton").style.display = "inline-block";
+          alert("File and details uploaded successfully!");
           loadFiles();
         } else {
           alert("Upload failed");
@@ -239,6 +262,11 @@
         console.error("Error deleting file:", error);
       }
     }
+
+    function redirectToGallery() {
+  window.location.href = "/gallery";  // Updated path with forward slashes
+}
+
   </script>
 </body>
 </html>
