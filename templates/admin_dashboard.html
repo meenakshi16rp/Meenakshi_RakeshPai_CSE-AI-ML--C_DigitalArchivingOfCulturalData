@@ -1,181 +1,1293 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard - Digital Archive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Style for loading indicators */
+        .loading-spinner {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto; /* Center spinner */
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Basic styling for modals */
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); padding-top: 60px; }
+        .modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 700px; border-radius: 8px; position: relative; }
+        .modal-close { color: #aaa; position: absolute; top: 10px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .modal-close:hover, .modal-close:focus { color: black; text-decoration: none; }
+
+        /* Tab styling */
+        .tab-button { padding: 10px 15px; cursor: pointer; background-color: #e5e7eb; border: 1px solid #d1d5db; border-bottom: none; border-radius: 5px 5px 0 0; margin-right: 2px; transition: background-color 0.3s; font-weight: 500; color: #4a5568;}
+        .tab-button.active { background-color: #ffffff; border-bottom: 1px solid #ffffff; font-weight: 600; color: #2d3748;}
+        .tab-content { display: none; padding: 20px; border: 1px solid #d1d5db; border-top: none; background-color: #ffffff; border-radius: 0 0 5px 5px; }
+        .tab-content.active { display: block; }
+
+        /* Utility class for small text */
+        .text-xs { font-size: 0.75rem; }
+        .text-muted { color: #6b7280; }
+
+        /* Responsive table */
+        @media screen and (max-width: 768px) {
+            table thead { display: none; } /* Hide table headers on small screens */
+            table tbody tr { display: block; margin-bottom: 1rem; border: 1px solid #ddd; border-radius: 5px; padding: 10px; }
+            table tbody td { display: block; text-align: right; padding-left: 50%; position: relative; }
+            table tbody td::before { content: attr(data-label); position: absolute; left: 10px; width: calc(50% - 20px); padding-right: 10px; white-space: nowrap; text-align: left; font-weight: bold; }
+        }
+         /* Custom styles for enhanced UI */
+         .card {
+             background-color: #ffffff;
+             padding: 20px;
+             border-radius: 8px;
+             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+             border-left: 5px solid; /* Use border-l for colored indicators */
+         }
+
+         .card-blue { border-left-color: #3b82f6; } /* blue-500 */
+         .card-green { border-left-color: #22c55e; } /* green-500 */
+         .card-yellow { border-left-color: #f59e0b; } /* yellow-500 */
+         .card-red { border-left-color: #ef4444; } /* red-500 */
+
+         .table-auto { border-collapse: collapse; width: 100%;}
+         .table-auto th, .table-auto td { padding: 12px 15px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+         .table-auto th { background-color: #f8f9fa; font-weight: 600; text-transform: uppercase; font-size: 0.85em; color: #4a5568; }
+         .table-auto tbody tr:hover { background-color: #f0f4f8; }
+
+         .form-input, .form-select, .form-textarea {
+             display: block;
+             width: 100%;
+             padding: 0.5rem 0.75rem;
+             font-size: 1rem;
+             line-height: 1.5;
+             color: #495057;
+             background-color: #fff;
+             background-clip: padding-box;
+             border: 1px solid #ced4da;
+             border-radius: 0.25rem;
+             transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+         }
+         .form-input:focus, .form-select:focus, .form-textarea:focus {
+             border-color: #80bdff;
+             outline: 0;
+             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+         }
+         .form-group { margin-bottom: 1rem; }
+         .form-label { display: inline-block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9em; color: #4a5568;}
+
+         /* Specific styles for small charts */
+         .small-chart-container {
+             display: flex; /* Use flexbox to place charts side-by-side */
+             justify-content: space-around; /* Distribute space around items */
+             flex-wrap: wrap; /* Allow wrapping on smaller screens */
+             gap: 20px; /* Add gap between charts */
+         }
+
+         .small-chart-item {
+             flex-basis: 300px; /* Base width roughly 8cm at 96 DPI */
+             flex-grow: 0; /* Prevent growing */
+             flex-shrink: 0; /* Prevent shrinking below base */
+             max-width: 100%; /* Ensure it doesn't exceed container width */
+             height: 300px; /* Fixed height roughly 8cm */
+         }
+
+
+    </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
 
-  <nav class="bg-blue-700 p-4 text-white flex justify-between items-center">
-    <h1 class="text-2xl font-bold">Admin Dashboard</h1>
-    <button onclick="logout()" class="bg-red-500 px-4 py-2 rounded">Logout</button>
-  </nav>
+    <nav class="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 text-white flex justify-between items-center shadow-md sticky top-0 z-50">
+        <h1 class="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
+        <div>
+            <span id="admin-welcome" class="mr-4 text-sm">Welcome!</span>
+            <button onclick="logout()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded shadow transition duration-200 text-sm font-medium">
+                <i class="fas fa-sign-out-alt mr-1"></i> Logout
+            </button>
+        </div>
+    </nav>
 
-  <div class="max-w-7xl mx-auto p-6 bg-white mt-6 rounded shadow">
-    <div class="mb-4">
-      <input type="text" id="search" placeholder="Search users..." class="border p-2 rounded w-full"/>
+    <div class="container mx-auto px-4 py-6">
+
+        <div class="mb-6 border-b-2 border-gray-300 flex overflow-x-auto">
+            <button class="tab-button active" onclick="openTab(event, 'tab-dashboard')">Dashboard</button>
+            <button class="tab-button" onclick="openTab(event, 'tab-users')">User Management</button>
+            <button class="tab-button" onclick="openTab(event, 'tab-files')">File Management</button>
+            </div>
+
+        <div>
+            <div id="tab-dashboard" class="tab-content active">
+                <h2 class="text-2xl font-semibold mb-6 text-gray-800">Analytics Overview</h2>
+                <div id="analytics-loading" class="loading-spinner"></div>
+                <div id="analytics-content" class="hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                        <div class="card card-blue">
+                            <h3 class="text-sm font-medium text-gray-500">Total Users</h3>
+                            <p id="stats-total-users" class="text-3xl font-bold text-gray-800">0</p>
+                        </div>
+                        <div class="card card-green">
+                            <h3 class="text-sm font-medium text-gray-500">Total Files</h3>
+                            <p id="stats-total-files" class="text-3xl font-bold text-gray-800">0</p>
+                        </div>
+                        <div class="card card-yellow">
+                            <h3 class="text-sm font-medium text-gray-500">Uploads (Last 7 Days)</h3>
+                            <p id="stats-recent-uploads" class="text-3xl font-bold text-gray-800">0</p>
+                         </div>
+                         </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        
+                        <div class="card">
+                            <h3 class="text-lg font-semibold mb-3 text-gray-700">File Category Distribution</h3>
+                             <div id="category-chart-loading" class="loading-spinner hidden"></div>
+                             <canvas id="categoryDistributionChart" height="180"></canvas>
+                             <div id="category-chart-error" class="text-red-600 mt-4 hidden text-center"></div>
+                        </div>
+                         <div class="card small-chart-item">
+                             <h4 class="text-md font-semibold mb-3 text-gray-700 text-center">User Contributions</h4>
+                              <div id="user-contribution-chart-loading" class="loading-spinner hidden"></div>
+                              <canvas id="userContributionChart" width="300" height="300"></canvas>
+                              <div id="user-contribution-chart-error" class="text-red-600 mt-4 hidden text-center"></div>
+                         </div>
+                         <div class="card small-chart-item">
+                             <h4 class="text-md font-semibold mb-3 text-gray-700 text-center">Uploads per Day</h4>
+                             <div id="daily-uploads-chart-loading" class="loading-spinner hidden"></div>
+                             <canvas id="dailyUploadsChart" width="300" height="300"></canvas>
+                              <div id="daily-uploads-chart-error" class="text-red-600 mt-4 hidden text-center"></div>
+                         </div>
+                    </div>
+                </div>
+                 <div id="analytics-error" class="text-red-600 mt-4 hidden text-center">Failed to load analytics data.</div>
+            </div>
+
+            <div id="tab-users" class="tab-content">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">User Management</h2>
+                 <div class="bg-yellow-100 text-yellow-800 p-3 rounded mb-4 border border-yellow-300 text-sm flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-2"></i> Warning: User management functions are currently publicly accessible. Consider securing these routes on the backend.
+                 </div>
+                <div class="mb-4">
+                    <input type="text" id="user-search" placeholder="Search users by email or name..." class="form-input w-full md:w-1/2" />
+                </div>
+                <div id="user-list-loading" class="loading-spinner"></div>
+                <div id="user-list-error" class="text-red-600 mt-4 hidden text-center">Failed to load user list.</div>
+                <div class="overflow-x-auto bg-white rounded-lg shadow">
+                    <table class="table-auto">
+                        <thead>
+                            <tr>
+                                <th class="py-3 px-4 text-left">Name</th>
+                                <th class="py-3 px-4 text-left">Email</th>
+                                <th class="py-3 px-4 text-center">Role</th>
+                                <th class="py-3 px-4 text-center">Status</th>
+                                <th class="py-3 px-4 text-center">Created</th>
+                                <th class="py-3 px-4 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-list" class="text-gray-700">
+                            </tbody>
+                    </table>
+                </div>
+                <p id="no-users-found" class="text-center text-gray-500 mt-4 hidden">No users found matching your criteria.</p>
+            </div>
+
+            <div id="tab-files" class="tab-content">
+                 <h2 class="text-2xl font-semibold mb-4 text-gray-800">File Management</h2>
+                 <div class="bg-yellow-100 text-yellow-800 p-3 rounded mb-4 border border-yellow-300 text-sm flex items-center">
+                     <i class="fas fa-exclamation-triangle mr-2"></i> Warning: File management functions are currently publicly accessible. Consider securing these routes on the backend.
+                 </div>
+                 <div class="card mb-6">
+                     <h3 class="text-lg font-semibold mb-3 text-gray-700">Filter Files</h3>
+                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-center">
+                         <input type="text" id="file-search" placeholder="Search (name, title, desc, tags, user...)" class="form-input col-span-full lg:col-span-1" />
+                         <select id="file-category-filter" class="form-select">
+                             <option value="">All Categories</option>
+                             <option value="art">Art</option>
+                             <option value="music">Music</option>
+                             <option value="dance">Dance</option>
+                             <option value="literature">Literature</option>
+                             <option value="sculpture">Sculpture</option>
+                             <option value="accessories">Accessories</option> <option value="other">Other</option>
+                         </select>
+                         <input type="date" id="file-date-from" title="Filter from date" class="form-input">
+                         <input type="date" id="file-date-to" title="Filter to date" class="form-input">
+                         <button onclick="applyFileFilters()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow transition duration-200 flex items-center justify-center"><i class="fas fa-filter mr-1"></i> Apply Filters</button>
+                         <button onclick="resetFileFilters()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded shadow transition duration-200 flex items-center justify-center"><i class="fas fa-times mr-1"></i> Reset</button>
+                     </div>
+                 </div>
+
+                 <div id="file-list-loading" class="loading-spinner"></div>
+                 <div id="file-list-error" class="text-red-600 mt-4 hidden text-center">Failed to load file list.</div>
+                 <div class="overflow-x-auto bg-white rounded-lg shadow">
+                     <table class="table-auto">
+                         <thead>
+                             <tr>
+                                 <th class="py-3 px-4 text-left">Filename</th>
+                                 <th class="py-3 px-4 text-left">Title</th>
+                                 <th class="py-3 px-4 text-left">Uploader</th>
+                                 <th class="py-3 px-4 text-center">Category</th>
+                                 <th class="py-3 px-4 text-center">Date</th>
+                                 <th class="py-3 px-4 text-center">AI</th>
+                                 <th class="py-3 px-4 text-center">Actions</th>
+                             </tr>
+                         </thead>
+                         <tbody id="file-list" class="text-gray-700 text-sm">
+                             </tbody>
+                     </table>
+                 </div>
+                 <p id="no-files-found" class="text-center text-gray-500 mt-4 hidden">No files found matching your criteria.</p>
+                 <div id="file-pagination" class="mt-6 flex justify-center items-center gap-2">
+                    </div>
+            </div>
+        </div>
     </div>
-    
-    <table class="w-full table-auto border-collapse">
-      <thead class="bg-gray-200">
-        <tr>
-          <th class="p-2">Name</th>
-          <th class="p-2">Email</th>
-          <th class="p-2">Role</th>
-          <th class="p-2">Actions</th>
-        </tr>
-      </thead>
-      <tbody id="user-list"></tbody>
-    </table>
-  </div>
 
-  <div class="mt-10 bg-white shadow rounded p-4">
-    <h2 class="text-xl font-bold mb-4 text-gray-700">User Upload Activity</h2>
-    <canvas id="uploadChart" height="100"></canvas>
-</div>
-
-  <!-- Modal for preview -->
-  <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
-    <div class="bg-white p-4 rounded shadow max-w-3xl w-full">
-      <button onclick="closeModal()" class="float-right text-red-600">Close</button>
-      <div id="previewContent" class="mt-4"></div>
+    <div id="previewModal" class="modal">
+        <div class="modal-content max-w-4xl w-full">
+            <span class="modal-close" onclick="closeModal('previewModal')">&times;</span>
+            <h3 id="previewModalTitle" class="text-xl font-semibold mb-4">File Preview</h3>
+            <div id="previewContent" class="mt-4 max-h-[70vh] overflow-auto border rounded p-2 bg-gray-50">
+                </div>
+            <div id="previewLoading" class="loading-spinner hidden"></div>
+            <div id="previewError" class="text-red-500 mt-2 hidden text-center">Could not load preview.</div>
+        </div>
     </div>
-  </div>
 
-  <script>
-    const BACKEND = "http://127.0.0.1:5000";
+    <div id="editRoleModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('editRoleModal')">&times;</span>
+            <h3 class="text-xl font-semibold mb-4 text-gray-800">Edit User Role</h3>
+            <p class="mb-4 text-gray-700">Editing role for: <strong id="editRoleUserName"></strong> (<span id="editRoleUserEmail" class="text-sm text-gray-600"></span>)</p>
+            <input type="hidden" id="editRoleUserId" />
+            <div class="form-group">
+                <label for="roleSelect" class="form-label">New Role:</label>
+                <select id="roleSelect" class="form-select">
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div class="text-right mt-6">
+                <button onclick="closeModal('editRoleModal')" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded mr-2 transition duration-200">Cancel</button>
+                <button onclick="submitNewRole()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow transition duration-200">Save Role</button>
+            </div>
+        </div>
+    </div>
 
-    async function loadUsers() {
-      const searchQuery = document.getElementById("search").value.toLowerCase();
-      const res = await fetch(`${BACKEND}/get_all_users`);
-      const users = await res.json();
-      const userList = document.getElementById("user-list");
-      userList.innerHTML = "";
+     <div id="editFileModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('editFileModal')">&times;</span>
+            <h3 class="text-xl font-semibold mb-4 text-gray-800">Edit File Metadata</h3>
+            <p class="mb-4 text-sm text-gray-600">Editing: <strong id="editFileName"></strong></p>
+            <input type="hidden" id="editFileId" />
+            <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-3">
+                <div class="form-group">
+                    <label for="editFileTitle" class="form-label">Title:</label>
+                    <input type="text" id="editFileTitle" class="form-input" />
+                </div>
+                <div class="form-group">
+                    <label for="editFileDescription" class="form-label">Description:</label>
+                    <textarea id="editFileDescription" rows="3" class="form-textarea"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editFileCategory" class="form-label">Category:</label>
+                    <select id="editFileCategory" class="form-select">
+                        <option value="art">Art</option>
+                        <option value="music">Music</option>
+                        <option value="dance">Dance</option>
+                        <option value="literature">Literature</option>
+                        <option value="sculpture">Sculpture</option>
+                        <option value="accessories">Accessories</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                 <div class="form-group">
+                    <label for="editFileLanguage" class="form-label">Language:</label>
+                    <input type="text" id="editFileLanguage" class="form-input" />
+                </div>
+                 <div class="form-group">
+                    <label for="editFileState" class="form-label">State:</label>
+                    <input type="text" id="editFileState" class="form-input" />
+                </div>
+                <div class="form-group">
+                    <label for="editFileTags" class="form-label">Tags (comma-separated):</label>
+                    <input type="text" id="editFileTags" class="form-input" />
+                </div>
+            </div>
+            <div class="text-right mt-6 pt-4 border-t border-gray-200">
+                <button onclick="closeModal('editFileModal')" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded mr-2 transition duration-200">Cancel</button>
+                <button onclick="submitFileMetadataUpdate()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow transition duration-200">Save Changes</button>
+            </div>
+        </div>
+    </div>
 
-      users
-        .filter(u => u.email.toLowerCase().includes(searchQuery))
-        .forEach(user => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td class="border p-2">${user.fullname || "N/A"}</td>
-            <td class="border p-2">${user.email}</td>
-            <td class="border p-2">${user.role}</td>
-            <td class="border p-2">
-              <button onclick="editUser('${user.uid}')" class="bg-green-500 text-white px-2 py-1 rounded">Edit</button>
-              <button onclick="deleteUser('${user.uid}')" class="bg-red-500 text-white px-2 py-1 rounded">Delete</button>
-              <button onclick="viewUploads('${user.uid}')" class="bg-blue-500 text-white px-2 py-1 rounded">View Uploads</button>
-            </td>
-          `;
-          userList.appendChild(tr);
-        });
-    }
 
-    function editUser(uid) {
-      const newRole = prompt("Enter new role (admin/user):");
-      if (newRole) {
-        fetch(`${BACKEND}/assign_role/${uid}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ role: newRole })
-        }).then(loadUsers);
-      }
-    }
+    <footer class="text-center text-sm text-gray-500 mt-10 py-4 border-t border-gray-300">
+        Digital Archive Admin Panel &copy; <span id="currentYear"></span>
+    </footer>
 
-    function deleteUser(uid) {
-      if (confirm("Delete this user?")) {
-        fetch(`${BACKEND}/delete_user/${uid}`, { method: "DELETE" })
-          .then(loadUsers);
-      }
-    }
+    <script>
+        // --- Configuration ---
+        const BACKEND_URL = "http://127.0.0.1:5000"; // Your Flask backend URL
+        let currentFileListPage = 1;
+        const FILES_PER_PAGE = 15; // Adjust as needed
 
-    async function viewUploads(uid) {
-      const res = await fetch(`${BACKEND}/get_user_uploads/${uid}`);
-      const uploads = await res.json();
-      const preview = document.getElementById("previewContent");
-      preview.innerHTML = "<h2 class='text-xl mb-4 font-semibold'>User Uploads</h2>";
+        // --- Chart Instances ---
+        let uploadsOverTimeChartInstance = null;
+        let categoryChartInstance = null;
+        let userContributionChartInstance = null; // New chart instance
+        let dailyUploadsChartInstance = null; // New chart instance
 
-      if (uploads.length === 0) {
-        preview.innerHTML += "<p>No uploads found.</p>";
-      }
+        // --- Utility Functions ---
+        function showLoading(elementId) { document.getElementById(elementId).classList.remove('hidden'); }
+        function hideLoading(elementId) { document.getElementById(elementId).classList.add('hidden'); }
+        function showError(elementId, message) {
+            const el = document.getElementById(elementId);
+            el.textContent = message || "An error occurred.";
+            el.classList.remove('hidden');
+        }
+        function hideError(elementId) { document.getElementById(elementId).classList.add('hidden'); }
 
-      uploads.forEach(file => {
-        const fileType = file.content_type;
-        let previewElement;
-
-        if (fileType.startsWith("image/")) {
-          previewElement = `<img src="${BACKEND}/file/preview/${file.file_id}" class="max-h-64 rounded mb-4"/>`;
-        } else if (fileType === "application/pdf") {
-          previewElement = `<iframe src="${BACKEND}/file/preview/${file.file_id}" class="w-full h-64 mb-4"></iframe>`;
-        } else if (fileType.startsWith("video/")) {
-          previewElement = `<video controls class="w-full max-h-64 mb-4"><source src="${BACKEND}/file/preview/${file.file_id}" type="${fileType}"></video>`;
-        } else {
-          previewElement = `<p class="text-sm text-gray-600">Cannot preview ${file.filename}</p>`;
+        // Format date string (YYYY-MM-DDTHH:mm:ss.sssZ) toYYYY-MM-DD
+        function formatDate(isoString) {
+            if (!isoString) return 'N/A';
+            try {
+                const date = new Date(isoString.endsWith('Z') ? isoString : isoString + 'Z');
+                return date.toISOString().split('T')[0];
+            } catch (e) {
+                console.error("Error formatting date:", isoString, e);
+                return 'Invalid Date';
+            }
         }
 
-        preview.innerHTML += `<div class="border-t pt-2">${previewElement}</div>`;
-      });
+        // Format file size
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0 || !bytes) return '0 Bytes'; // Handle null/undefined bytes
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
 
-      document.getElementById("previewModal").classList.remove("hidden");
-      document.getElementById("previewModal").classList.add("flex");
-    }
+        // Debounce function to limit API calls on input
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
 
-    function closeModal() {
-      document.getElementById("previewModal").classList.add("hidden");
-    }
+        // Generate a list of distinct colors
+        function generateDistinctColors(numColors) {
+             const colors = [];
+             const saturation = 70; // Moderate saturation
+             const lightness = 60; // Moderate lightness
+             for (let i = 0; i < numColors; i++) {
+                 const hue = (i * 137.508) % 360; // Golden Angle approximation for distinct hues
+                 colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
+             }
+             return colors;
+         }
 
-    function logout() {
-      fetch("/logout").then(() => {
-        window.location.href = "/";
-      });
-    }
 
-    document.getElementById("search").addEventListener("input", loadUsers);
-    window.onload = loadUsers;
+        // --- Tab Management ---
+        function openTab(evt, tabName) {
+            const tabcontent = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            const tablinks = document.getElementsByClassName("tab-button");
+            for (let i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            // Ensure evt and currentTarget exist before adding class
+            if (evt && evt.currentTarget) {
+                evt.currentTarget.className += " active";
+            } else {
+                // If called programmatically without an event, find the button and activate it
+                const activeButton = document.querySelector(`.tab-button[onclick*="${tabName}"]`);
+                if (activeButton) activeButton.classList.add('active');
+            }
 
-    async function loadChart() {
-    const res = await fetch('/analytics/uploads_over_time');
-    const chartData = await res.json();
 
-    const ctx = document.getElementById('uploadChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: chartData.labels,
-            datasets: chartData.datasets
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                title: {
-                    display: true,
-                    text: 'User Uploads Over Time'
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0
-                    }
+             // Load data for the activated tab
+             if (tabName === 'tab-dashboard') {
+                 loadAnalyticsSummary();
+                 loadCategoryDistributionChart();
+                 loadDailyUploadsChart();
+                 loadUserContributionChart(); // Load new chart
+             } else if (tabName === 'tab-users') {
+                 loadUsers();
+             } else if (tabName === 'tab-files') {
+                 loadFiles(); // Load first page of files
+             }
+        }
+
+        // --- Modal Management ---
+        function openModal(modalId) { document.getElementById(modalId).style.display = "block"; }
+        function closeModal(modalId) { document.getElementById(modalId).style.display = "none"; }
+        window.onclick = function(event) {
+            const modals = document.getElementsByClassName('modal');
+            for (let i = 0; i < modals.length; i++) {
+                if (event.target == modals[i]) {
+                    modals[i].style.display = "none";
                 }
             }
         }
-    });
-}
 
-// Call after user auth check
-auth.onAuthStateChanged(async (user) => {
-    if (user) {
-        const idTokenResult = await user.getIdTokenResult();
-        if (idTokenResult.claims.role === "admin") {
-            loadUsers();
-            loadChart();  // Load chart after loading users
+        // --- Authentication & Session ---
+        async function checkAuthAndFetchSession() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/sessionInfo`);
+                // Even if login is not enforced, we check session info for UI personalization
+                if (!response.ok) {
+                    console.warn(`Failed to fetch session info: ${response.status}`);
+                    const welcomeEl = document.getElementById('admin-welcome');
+                    if(welcomeEl) welcomeEl.textContent = 'Status: Not Logged In';
+                    return null;
+                }
+                const sessionData = await response.json();
+
+                // Display welcome message if session exists and is not Guest
+                const welcomeEl = document.getElementById('admin-welcome');
+                if(welcomeEl && sessionData && sessionData.uid) {
+                    if(sessionData.fullname && sessionData.fullname !== 'N/A') {
+                        welcomeEl.textContent = `Welcome, ${escapeHtml(sessionData.fullname)} (${escapeHtml(sessionData.role)})`;
+                    } else if (sessionData.email) {
+                         welcomeEl.textContent = `Welcome, ${escapeHtml(sessionData.email)} (${escapeHtml(sessionData.role)})`;
+                    } else {
+                         welcomeEl.textContent = `Welcome, User ${escapeHtml(sessionData.uid)} (${escapeHtml(sessionData.role)})`;
+                    }
+                     // Enable admin features if user is admin (client-side check for UI only)
+                     if (sessionData.role === 'admin') {
+                        document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+                     } else {
+                         // Hide admin tabs if not admin (important for public routes)
+                         document.querySelector('.tab-button[onclick*="tab-users"]').style.display = 'none';
+                         document.querySelector('.tab-button[onclick*="tab-files"]').style.display = 'none';
+                     }
+
+                } else if (welcomeEl) {
+                     welcomeEl.textContent = 'Status: Not Logged In';
+                     // Hide admin tabs if not logged in
+                     document.querySelector('.tab-button[onclick*="tab-users"]').style.display = 'none';
+                     document.querySelector('.tab-button[onclick*="tab-files"]').style.display = 'none';
+                }
+
+                console.log("Fetched session info:", sessionData);
+                return sessionData;
+            } catch (error) {
+                console.error("Error fetching session info:", error);
+                 const welcomeEl = document.getElementById('admin-welcome');
+                 if(welcomeEl) welcomeEl.textContent = 'Status: Error checking login';
+                return null;
+            }
         }
-    }
-});
-  </script>
+
+        function logout() {
+            window.location.href = `${BACKEND_URL}/logout`;
+        }
+
+        // --- User Management Functions ---
+        async function loadUsers() {
+            // Basic check if user is likely an admin based on UI visibility
+            const isUserTabVisible = document.querySelector('.tab-button[onclick*="tab-users"]').style.display !== 'none';
+            if (!isUserTabVisible && document.getElementById('admin-welcome').textContent.includes('Guest')) {
+                 document.getElementById('user-list').innerHTML = '<tr><td colspan="6" class="py-3 px-4 text-center text-gray-500">Admin privileges required to view users.</td></tr>';
+                 hideLoading('user-list-loading');
+                 hideError('user-list-error');
+                 document.getElementById('no-users-found').classList.add('hidden');
+                 return;
+            }
+
+
+            showLoading('user-list-loading');
+            hideError('user-list-error');
+            document.getElementById('no-users-found').classList.add('hidden');
+            const userListBody = document.getElementById("user-list");
+            userListBody.innerHTML = "";
+
+            const searchQuery = document.getElementById("user-search").value.toLowerCase();
+            // NOTE: The backend route /admin/users is needed to fetch the user list with role and status
+            // This frontend code assumes such a backend route exists and returns users with properties: uid, email, display_name, role, disabled, creation_time
+            // If your backend uses a different structure or route, update this fetch call accordingly.
+            try {
+                const response = await fetch(`${BACKEND_URL}/admin/users`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+                const users = await response.json();
+
+                const filteredUsers = users.filter(user =>
+                    (user.fullname && user.fullname.toLowerCase().includes(searchQuery)) ||
+                    (user.email && user.email.toLowerCase().includes(searchQuery))
+                );
+
+                if (filteredUsers.length === 0) {
+                     document.getElementById('no-users-found').classList.remove('hidden');
+                     userListBody.innerHTML = '<tr><td colspan="6" class="py-3 px-4 text-center text-gray-500">No users found.</td></tr>';
+                } else {
+                    filteredUsers.forEach(user => {
+                        const tr = document.createElement("tr");
+                        tr.className = "border-b border-gray-200 hover:bg-gray-50";
+                        // Assuming 'disabled' and 'creation_time' properties exist on user objects from backend
+                        const statusClass = user.disabled ? "bg-red-200 text-red-700" : "bg-green-200 text-green-700";
+                        const statusText = user.disabled ? "Disabled" : "Active";
+                        const safeFullname = escapeHtml(user.fullname || "N/A");
+                        const safeEmail = escapeHtml(user.email || "N/A");
+                        const safeRole = escapeHtml(user.role || "user");
+                        const formattedCreationTime = formatDate(user.creation_time);
+
+
+                        tr.innerHTML = `
+                            <td data-label="Name" class="py-3 px-4">${safeFullname}</td>
+                            <td data-label="Email" class="py-3 px-4">${safeEmail}</td>
+                            <td data-label="Role" class="py-3 px-4 text-center">${safeRole}</td>
+                            <td data-label="Status" class="py-3 px-4 text-center"><span class="${statusClass} py-1 px-3 rounded-full text-xs">${statusText}</span></td>
+                             <td data-label="Created" class="py-3 px-4 text-center">${formattedCreationTime}</td>
+                            <td data-label="Actions" class="py-3 px-4 text-center whitespace-nowrap">
+                                <button title="Edit Role" onclick="editUserRole('${user.uid}', '${safeFullname}', '${safeEmail}', '${safeRole}')" class="text-indigo-600 hover:text-indigo-900 mr-2"><i class="fas fa-user-shield"></i></button>
+                                <button title="Delete User" onclick="deleteUser('${user.uid}', '${safeEmail}')" class="text-red-600 hover:text-red-900 mr-2"><i class="fas fa-trash-alt"></i></button>
+                                <button title="View Uploads" onclick="viewUserUploads('${user.uid}', '${safeEmail}')" class="text-blue-600 hover:text-blue-900"><i class="fas fa-folder-open"></i></button>
+                            </td>
+                        `;
+                        userListBody.appendChild(tr);
+                    });
+                 }
+            } catch (error) {
+                console.error("Error loading users:", error);
+                showError('user-list-error', `Failed to load user list: ${error.message}`);
+                 userListBody.innerHTML = '<tr><td colspan="6" class="py-3 px-4 text-center text-gray-500">Error loading users.</td></tr>';
+            } finally {
+                hideLoading('user-list-loading');
+            }
+        }
+
+        function editUserRole(uid, currentName, currentEmail, currentRole) {
+            document.getElementById('editRoleUserId').value = uid;
+            document.getElementById('editRoleUserName').textContent = currentName;
+            document.getElementById('editRoleUserEmail').textContent = currentEmail;
+            document.getElementById('roleSelect').value = currentRole;
+            openModal('editRoleModal');
+        }
+
+        async function submitNewRole() {
+            const uid = document.getElementById('editRoleUserId').value;
+            const newRole = document.getElementById('roleSelect').value;
+            if (!uid || !newRole) { alert("Error: User ID or role missing."); return; }
+
+            // NOTE: The backend route /admin/assign_role/<uid> is needed to handle this request.
+            // This frontend code assumes it exists and expects a JSON response with a 'message'.
+            try {
+                const response = await fetch(`${BACKEND_URL}/admin/assign_role/${uid}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ role: newRole })
+                });
+                 const result = await response.json();
+                if (!response.ok) {
+                     const errorData = await response.json();
+                     throw new Error(errorData.error || `Failed to assign role (Status: ${response.status})`);
+                }
+                alert(result.message || "Role updated successfully!");
+                closeModal('editRoleModal');
+                loadUsers(); // Refresh user list
+                 checkAuthAndFetchSession(); // Update welcome message in case current user's role changed
+            } catch (error) {
+                 console.error("Error assigning role:", error);
+                 alert(`Failed to assign role: ${error.message}`);
+            }
+        }
+
+
+        async function deleteUser(uid, email) {
+            if (confirm(`Are you sure you want to permanently delete the user "${email}" (UID: ${uid})? This action cannot be undone.`)) {
+                // NOTE: The backend route /admin/delete_user/<uid> is needed to handle this request.
+                // This frontend code assumes it exists and expects a JSON response with a 'message'.
+                try {
+                    const response = await fetch(`${BACKEND_URL}/admin/delete_user/${uid}`, { method: "DELETE" });
+                    const result = await response.json();
+                     if (!response.ok) {
+                         const errorData = await response.json();
+                         alert(`Failed to delete user: ${errorData.error || response.statusText}`);
+                     } else {
+                        alert(result.message || "User deleted successfully.");
+                        loadUsers(); // Refresh user list
+                     }
+                } catch (error) {
+                    console.error("Error deleting user:", error);
+                    alert(`Failed to delete user: ${error.message}`);
+                }
+            }
+        }
+
+        function viewUserUploads(uid, userName) {
+            console.log(`Filtering files for user: ${userName} (UID: ${uid})`);
+            // Activate the files tab programmatically
+             const fileTabButton = document.querySelector('.tab-button[onclick*="tab-files"]');
+             if (fileTabButton) {
+                 openTab({ currentTarget: fileTabButton }, 'tab-files');
+             } else {
+                 // Fallback if button selection fails (shouldn't happen with correct selector)
+                 document.getElementById('tab-files').style.display = 'block';
+                 document.getElementById('tab-dashboard').style.display = 'none';
+                 document.getElementById('tab-users').style.display = 'none';
+             }
+            // Load files filtered by this user
+            // Set the hidden user filter input or pass it directly
+             document.getElementById('file-search').value = ''; // Clear search input
+             document.getElementById('file-category-filter').value = '';
+             document.getElementById('file-date-from').value = '';
+             document.getElementById('file-date-to').value = '';
+            loadFiles(1, { user_uid: uid }); // Pass user_uid filter
+        }
+
+        // --- File Management Functions ---
+        function applyFileFilters() {
+            currentFileListPage = 1;
+            loadFiles();
+        }
+        function resetFileFilters() {
+            document.getElementById('file-search').value = '';
+            document.getElementById('file-category-filter').value = '';
+            document.getElementById('file-date-from').value = '';
+            document.getElementById('file-date-to').value = '';
+            currentFileListPage = 1;
+            loadFiles(); // Load without any extra filters
+        }
+
+        async function loadFiles(page = 1, extraFilters = {}) {
+             // Basic check if user is likely an admin based on UI visibility
+            const isFileTabVisible = document.querySelector('.tab-button[onclick*="tab-files"]').style.display !== 'none';
+            if (!isFileTabVisible && document.getElementById('admin-welcome').textContent.includes('Guest')) {
+                 document.getElementById('file-list').innerHTML = '<tr><td colspan="7" class="py-3 px-4 text-center text-gray-500">Admin privileges required to view files.</td></tr>';
+                 hideLoading('file-list-loading');
+                 hideError('file-list-error');
+                 document.getElementById('no-files-found').classList.add('hidden');
+                 updatePaginationControls(0, 1, FILES_PER_PAGE); // Hide pagination
+                 return;
+            }
+
+
+            currentFileListPage = page;
+            showLoading('file-list-loading');
+            hideError('file-list-error');
+            document.getElementById('no-files-found').classList.add('hidden');
+            const fileListBody = document.getElementById("file-list");
+            fileListBody.innerHTML = "";
+
+            const filters = { ...extraFilters };
+            const searchTerm = document.getElementById('file-search').value.trim();
+            const category = document.getElementById('file-category-filter').value;
+            const dateFrom = document.getElementById('file-date-from').value;
+            const dateTo = document.getElementById('file-date-to').value;
+            if (searchTerm) filters.search = searchTerm;
+            if (category) filters.category = category;
+            if (dateFrom) filters.date_from = dateFrom;
+            if (dateTo) filters.date_to = dateTo;
+
+            const queryParams = new URLSearchParams({ page: currentFileListPage, limit: FILES_PER_PAGE, ...filters });
+
+            // NOTE: The backend route /admin/all_files is needed to fetch files with pagination and filters.
+            // It should return an object like { files: [...], total_files: N, page: P, limit: L }
+            // Each file object should include: file_id, filename, title, uploaded_by (with email/fullname), category, upload_date, ai_generated, size_bytes, content_type
+            try {
+                const response = await fetch(`${BACKEND_URL}/admin/all_files?${queryParams.toString()}`);
+                if (!response.ok) {
+                     const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+                const result = await response.json();
+                const files = result.files;
+
+                if (!files || files.length === 0) {
+                    document.getElementById('no-files-found').classList.remove('hidden');
+                     fileListBody.innerHTML = '<tr><td colspan="7" class="py-3 px-4 text-center text-gray-500">No files found.</td></tr>';
+                } else {
+                    files.forEach(file => {
+                        const tr = document.createElement("tr");
+                        tr.className = "border-b border-gray-200 hover:bg-gray-50";
+                        const uploaderEmail = file.uploaded_by?.email || 'N/A';
+                        const uploaderName = file.uploaded_by?.fullname || 'N/A';
+                        const uploaderDisplay = uploaderName !== 'N/A' && uploaderName !== uploaderEmail ? `${uploaderName} (${uploaderEmail})` : uploaderEmail;
+                        const safeFilename = escapeHtml(file.filename || 'N/A');
+                        const safeTitle = escapeHtml(file.title || 'Untitled');
+                        const safeCategory = escapeHtml(file.category || 'N/A');
+                        const formattedDate = formatDate(file.upload_date);
+                        const aiIcon = file.ai_generated
+                            ? '<i class="fas fa-brain text-purple-600" title="Metadata generated by AI"></i>'
+                            : '<i class="fas fa-user text-gray-500" title="Metadata entered manually"></i>';
+
+                        tr.innerHTML = `
+                            <td data-label="Filename" class="py-3 px-4 text-xs">${safeFilename} <span class="text-muted text-xs">(${formatBytes(file.size_bytes)})</span></td>
+                            <td data-label="Title" class="py-3 px-4">${safeTitle}</td>
+                            <td data-label="Uploader" class="py-3 px-4 text-xs" title="${escapeHtml(uploaderEmail)}">${escapeHtml(uploaderDisplay)}</td>
+                            <td data-label="Category" class="py-3 px-4 text-center">${safeCategory}</td>
+                            <td data-label="Date" class="py-3 px-4 text-center">${formattedDate}</td>
+                            <td data-label="AI" class="py-3 px-4 text-center">${aiIcon}</td>
+                            <td data-label="Actions" class="py-3 px-4 text-center whitespace-nowrap">
+                                <button title="Preview" onclick="previewFile('${file.file_id}', '${safeFilename}', '${file.content_type}')" class="text-blue-600 hover:text-blue-800 mr-2"><i class="fas fa-eye"></i></button>
+                                <button title="Edit Metadata" onclick='editFileMetadata(${JSON.stringify(file)})' class="text-indigo-600 hover:text-indigo-800 mr-2"><i class="fas fa-edit"></i></button>
+                                <button title="Download" onclick="downloadFile('${file.file_id}')" class="text-green-600 hover:text-green-800 mr-2"><i class="fas fa-download"></i></button>
+                                <button title="Delete File" onclick="deleteAdminFile('${file.file_id}', '${safeFilename}')" class="text-red-600 hover:text-red-800"><i class="fas fa-trash-alt"></i></button>
+                            </td>
+                        `;
+                        fileListBody.appendChild(tr);
+                    });
+                }
+                 updatePaginationControls(result.total_files, result.page, result.limit);
+            } catch (error) {
+                console.error("Error loading files:", error);
+                showError('file-list-error', `Failed to load file list: ${error.message}`);
+                 fileListBody.innerHTML = '<tr><td colspan="7" class="py-3 px-4 text-center text-gray-500">Error loading files.</td></tr>';
+                 updatePaginationControls(0, 1, FILES_PER_PAGE);
+            } finally {
+                hideLoading('file-list-loading');
+            }
+        }
+
+         function updatePaginationControls(totalItems, currentPage, itemsPerPage) {
+            const paginationContainer = document.getElementById('file-pagination');
+            paginationContainer.innerHTML = '';
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            if (totalPages <= 1) return;
+
+            const createButton = (text, page, isDisabled = false, isCurrent = false) => {
+                const button = document.createElement('button');
+                button.innerHTML = text;
+                button.className = `px-3 py-1 border rounded text-sm font-medium ${isDisabled ? 'opacity-50 cursor-not-allowed bg-gray-100 text-gray-500' : 'bg-white hover:bg-gray-200 text-gray-700 border-gray-300'} ${isCurrent ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' : ''}`;
+                button.disabled = isDisabled;
+                if (!isDisabled && !isCurrent) {
+                    button.onclick = () => loadFiles(page);
+                }
+                return button;
+            };
+
+             const createEllipsis = () => {
+                const span = document.createElement('span');
+                span.textContent = '...';
+                span.className = 'px-2 text-gray-500';
+                return span;
+             };
+
+
+            // Previous Button
+            paginationContainer.appendChild(createButton('&laquo;', currentPage - 1, currentPage === 1));
+
+            // Page Numbers Logic
+            const maxPagesToShow = 5;
+            const halfPages = Math.floor(maxPagesToShow / 2);
+
+            let startPage = Math.max(1, currentPage - halfPages);
+            let endPage = Math.min(totalPages, currentPage + halfPages);
+
+            if (currentPage - halfPages < 1) {
+                endPage = Math.min(totalPages, maxPagesToShow);
+            }
+            if (currentPage + halfPages > totalPages) {
+                startPage = Math.max(1, totalPages - maxPagesToShow + 1);
+            }
+
+            // Show first page and ellipsis if needed
+            if (startPage > 1) {
+                paginationContainer.appendChild(createButton('1', 1));
+                if (startPage > 2) {
+                    paginationContainer.appendChild(createEllipsis());
+                }
+            }
+
+            // Show page numbers around the current page
+            for (let i = startPage; i <= endPage; i++) {
+                paginationContainer.appendChild(createButton(i, i, false, i === currentPage));
+            }
+
+            // Show last page and ellipsis if needed
+            if (endPage < totalPages) {
+                 if (endPage < totalPages - 1) {
+                     paginationContainer.appendChild(createEllipsis());
+                 }
+                paginationContainer.appendChild(createButton(totalPages, totalPages));
+            }
+
+            // Next Button
+            paginationContainer.appendChild(createButton('&raquo;', currentPage + 1, currentPage === totalPages));
+        }
+
+
+        async function previewFile(fileId, filename, contentType) {
+            const previewContent = document.getElementById("previewContent");
+            const modalTitle = document.getElementById("previewModalTitle");
+            const previewLoading = document.getElementById("previewLoading");
+            const previewError = document.getElementById("previewError");
+
+            previewContent.innerHTML = "";
+            modalTitle.textContent = `Preview: ${escapeHtml(filename)}`;
+            previewLoading.classList.remove('hidden');
+            previewError.classList.add('hidden');
+            openModal('previewModal');
+
+            const previewUrl = `${BACKEND_URL}/files/preview/${fileId}`;
+            let previewElement = '';
+
+            try {
+                if (!contentType) contentType = 'application/octet-stream';
+
+                if (contentType.startsWith("image/")) {
+                    previewElement = `<img src="${previewUrl}" alt="Preview of ${escapeHtml(filename)}" class="max-w-full h-auto rounded mx-auto block"/>`;
+                } else if (contentType === "application/pdf") {
+                    previewElement = `<iframe src="${previewUrl}" class="w-full h-[65vh] border-0 rounded"></iframe>`;
+                } else if (contentType.startsWith("video/")) {
+                    previewElement = `<video controls class="w-full max-h-[65vh] rounded mx-auto block"><source src="${previewUrl}" type="${contentType}">Your browser does not support the video tag.</video>`;
+                } else if (contentType.startsWith("text/")) {
+                    const response = await fetch(previewUrl);
+                    if (!response.ok) throw new Error('Failed to fetch text content');
+                    const textContent = await response.text();
+                    previewElement = `<pre class="whitespace-pre-wrap bg-gray-100 p-3 rounded text-sm border">${escapeHtml(textContent)}</pre>`;
+                } else {
+                    previewElement = `<p class="text-center text-gray-600 p-4">Preview not available for this file type (${escapeHtml(contentType)}). <a href="${BACKEND_URL}/files/download/${fileId}" class="text-blue-600 hover:underline">Download file</a> instead.</p>`;
+                }
+                previewContent.innerHTML = previewElement;
+            } catch (error) {
+                 console.error("Error loading preview:", error);
+                 previewError.textContent = `Could not load preview for ${escapeHtml(filename)}. Try downloading the file.`;
+                 previewError.classList.remove('hidden');
+                 previewContent.innerHTML = `<p class="text-center text-gray-600 p-4">Preview failed. <a href="${BACKEND_URL}/files/download/${fileId}" class="text-blue-600 hover:underline">Download file</a> instead.</p>`;
+            } finally {
+                 previewLoading.classList.add('hidden');
+            }
+        }
+
+        function editFileMetadata(fileData) {
+            if (!fileData || !fileData.file_id) {
+                 console.error("Invalid file data passed to editFileMetadata:", fileData);
+                 alert("Error: Cannot edit file - invalid data.");
+                 return;
+             }
+            document.getElementById('editFileId').value = fileData.file_id;
+            document.getElementById('editFileName').textContent = escapeHtml(fileData.filename || 'N/A');
+            document.getElementById('editFileTitle').value = fileData.title || '';
+            document.getElementById('editFileDescription').value = fileData.description || '';
+            document.getElementById('editFileCategory').value = fileData.category || 'other';
+            document.getElementById('editFileLanguage').value = fileData.language || '';
+            document.getElementById('editFileState').value = fileData.state || '';
+            document.getElementById('editFileTags').value = (fileData.tags || []).join(', ');
+            openModal('editFileModal');
+        }
+
+        async function submitFileMetadataUpdate() {
+            const fileId = document.getElementById('editFileId').value;
+            const updatedData = {
+                title: document.getElementById('editFileTitle').value.trim(),
+                description: document.getElementById('editFileDescription').value.trim(),
+                category: document.getElementById('editFileCategory').value,
+                language: document.getElementById('editFileLanguage').value.trim(),
+                state: document.getElementById('editFileState').value.trim(),
+                tags: document.getElementById('editFileTags').value.trim()
+            };
+            if (!fileId) { alert("Error: File ID missing."); return; }
+
+            // NOTE: The backend route /admin/edit_file/<file_id> is needed to handle this PUT request.
+            // It should expect a JSON body with the updated metadata fields.
+            try {
+                const response = await fetch(`${BACKEND_URL}/admin/edit_file/${fileId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedData)
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    const errorData = await response.json();
+                     throw new Error(errorData.error || `Failed to update metadata (Status: ${response.status})`);
+                }
+                alert(result.message || "Metadata updated successfully!");
+                closeModal('editFileModal');
+                loadFiles(currentFileListPage); // Refresh file list on current page
+            } catch (error) {
+                console.error("Error updating file metadata:", error);
+                alert(`Failed to update metadata: ${error.message}`);
+            }
+        }
+
+
+        function downloadFile(fileId) {
+            window.location.href = `${BACKEND_URL}/files/download/${fileId}`;
+        }
+
+        async function deleteAdminFile(fileId, filename) {
+            if (confirm(`Are you sure you want to permanently delete the file "${filename}" (ID: ${fileId})? This action cannot be undone.`)) {
+                // NOTE: The backend route /files/delete/<file_id> is used here (already exists).
+                // This frontend code assumes it exists and expects a JSON response with a 'message'.
+                try {
+                    const response = await fetch(`${BACKEND_URL}/files/delete/${fileId}`, { method: "DELETE" });
+                    const result = await response.json();
+                     if (!response.ok) {
+                         const errorData = await response.json();
+                         alert(`Failed to delete file: ${errorData.error || response.statusText}`);
+                     } else {
+                        alert(result.message || "File deleted successfully.");
+                        loadFiles(currentFileListPage); // Refresh file list on current page
+                     }
+                } catch (error) {
+                    console.error("Error deleting file:", error);
+                    alert(`Failed to delete file: ${error.message}`);
+                }
+            }
+        }
+
+        // --- Analytics Functions ---
+        async function loadAnalyticsSummary() {
+            showLoading('analytics-loading');
+            hideError('analytics-error');
+            document.getElementById('analytics-content').classList.add('hidden');
+            // NOTE: The backend route /admin/analytics/summary is needed.
+            // It should return an object like { total_users: N, total_files: N, recent_uploads_last_7_days: N, category_distribution: {...} }
+            try {
+                const response = await fetch(`${BACKEND_URL}/admin/analytics/summary`);
+                if (!response.ok) {
+                     const errorData = await response.json();
+                     throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                document.getElementById('stats-total-users').textContent = data.total_users ?? 'N/A';
+                document.getElementById('stats-total-files').textContent = data.total_files ?? 'N/A';
+                document.getElementById('stats-recent-uploads').textContent = data.recent_uploads_last_7_days ?? 'N/A';
+                 // Add placeholder for storage used - backend needs implementation for this
+                 // document.getElementById('stats-storage-used').textContent = 'N/A'; // Removed this element
+                document.getElementById('analytics-content').classList.remove('hidden');
+            } catch (error) {
+                console.error("Error loading analytics summary:", error);
+                showError('analytics-error', `Failed to load summary data: ${error.message}`);
+            } finally {
+                 hideLoading('analytics-loading');
+            }
+        }
+
+      
+        async function loadCategoryDistributionChart() {
+             const canvas = document.getElementById('categoryDistributionChart');
+             const loading = document.getElementById('category-chart-loading');
+             const errorDiv = document.getElementById('category-chart-error');
+             if (!canvas) return;
+             showLoading('category-chart-loading');
+             hideError('category-chart-error');
+             try {
+                 const response = await fetch(`${BACKEND_URL}/admin/analytics/summary`);
+                 if (!response.ok) {
+                     const errorData = await response.json();
+                     throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                 }
+                 const data = await response.json();
+                 const categoryData = data.category_distribution || {};
+                 const labels = Object.keys(categoryData);
+                 const counts = Object.values(categoryData);
+
+                 if (!labels || labels.length === 0 || counts.reduce((sum, count) => sum + count, 0) === 0) {
+                      showError('category-chart-error', 'No data available for Category Distribution chart.');
+                      canvas.style.display = 'none';
+                      if (categoryChartInstance) categoryChartInstance.destroy();
+                      return;
+                 }
+
+
+                 // Generate more visually appealing and distinct colors
+                 const backgroundColors = [
+                    '#4299e1', '#48bb78', '#f6e05e', '#fc8181', '#9f7aea', '#ed64a6', '#f6ad55', '#63b3ed',
+                    '#6ee7b5', '#fbd38d', '#feb2b2', '#d6bcfa', '#fbb6ce', '#bee3f8', '#a7f3d0', '#fef9c3',
+                    '#fee2e2', '#e9d5ff', '#fbcfe8', '#bfdbfe'
+                 ]; // Example color palette (Tailwind CSS inspired)
+
+                 const chartConfig = {
+                     type: 'doughnut',
+                     data: {
+                         labels: labels,
+                         datasets: [{
+                             label: 'Files per Category',
+                             data: counts,
+                             backgroundColor: labels.map((_, i) => backgroundColors[i % backgroundColors.length]), // Assign colors
+                             hoverOffset: 8
+                         }]
+                     },
+                     options: {
+                         responsive: false,
+                         maintainAspectRatio: false, // Allow explicit height to control size
+                         plugins: {
+                             legend: {
+                                 position: 'right', // Position legend on the right
+                                 labels: {
+                                     font: { size: 10 }, // Smaller legend font
+                                     boxWidth: 12 // Smaller color boxes
+                                 }
+                             },
+                             title: {
+                                 display: false, // Hide default Chart.js title since we have an H3
+                             },
+                              tooltip: {
+                                 callbacks: {
+                                     label: function(tooltipItem) {
+                                         const label = tooltipItem.label || '';
+                                         const value = tooltipItem.raw || 0;
+                                         const total = tooltipItem.dataset.data.reduce((sum, current) => sum + current, 0);
+                                         const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+                                         return `${label}: ${value} (${percentage})`; // Show count and percentage
+                                     }
+                                 }
+                              }
+                         },
+
+                         layout: {
+                             padding: {
+                                 left: 10,
+                                 right: 10,
+                                 top: 10,
+                                 bottom: 10
+                             }
+                         }
+                     }
+                 };
+                 const ctx = canvas.getContext('2d');
+                 if (categoryChartInstance) categoryChartInstance.destroy();
+                 categoryChartInstance = new Chart(ctx, chartConfig);
+                  canvas.style.display = '';
+             } catch (error) {
+                 console.error("Error loading category distribution chart:", error);
+                 canvas.style.display = 'none';
+                 showError('category-chart-error', `Failed to load chart: ${error.message}`);
+             } finally {
+                 loading.classList.add('hidden');
+             }
+         }
+
+        // New function to load User Contribution Pie Chart
+        async function loadUserContributionChart() {
+            const canvas = document.getElementById('userContributionChart');
+            const loading = document.getElementById('user-contribution-chart-loading');
+             const errorDiv = document.getElementById('user-contribution-chart-error');
+            if (!canvas) return;
+             showLoading('user-contribution-chart-loading');
+             hideError('user-contribution-chart-error');
+            try {
+                const response = await fetch(`${BACKEND_URL}/admin/analytics/user_contributions`);
+                if (!response.ok) {
+                     const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                const labels = Object.keys(data);
+                const counts = Object.values(data);
+
+                 if (!labels || labels.length === 0 || counts.reduce((sum, count) => sum + count, 0) === 0) {
+                      showError('user-contribution-chart-error', 'No data available for User Contributions chart.');
+                      canvas.style.display = 'none';
+                      if (userContributionChartInstance) userContributionChartInstance.destroy();
+                      return;
+                 }
+
+                const backgroundColors = generateDistinctColors(labels.length); // Use utility to get distinct colors
+
+                const ctx = canvas.getContext('2d');
+                if (userContributionChartInstance) userContributionChartInstance.destroy();
+                userContributionChartInstance = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Uploads',
+                            data: counts,
+                            backgroundColor: backgroundColors,
+                            hoverOffset: 8
+                        }]
+                    },
+                    options: {
+                        responsive: false, // Keep fixed size
+                        maintainAspectRatio: false, // Keep fixed size
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'right', // Position legend on the right
+                                labels: {
+                                    font: { size: 9 }, // Smaller legend font
+                                    boxWidth: 10 // Smaller color boxes
+                                }
+                            },
+                            tooltip: {
+                                 callbacks: {
+                                     label: function(tooltipItem) {
+                                         const label = tooltipItem.label || '';
+                                         const value = tooltipItem.raw || 0;
+                                         const total = tooltipItem.dataset.data.reduce((sum, current) => sum + current, 0);
+                                         const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + '%' : '0%';
+                                         return `${label}: ${value} (${percentage})`; // Show count and percentage
+                                     }
+                                 }
+                              }
+                        }
+                    }
+                });
+                 canvas.style.display = '';
+            } catch (error) {
+                console.error("Error loading user contribution chart:", error);
+                 canvas.style.display = 'none';
+                 showError('user-contribution-chart-error', `Failed to load chart: ${error.message}`);
+            } finally {
+                 loading.classList.add('hidden');
+            }
+        }
+
+        // New function to load Daily Uploads Bar Chart
+        async function loadDailyUploadsChart() {
+            const canvas = document.getElementById('dailyUploadsChart');
+             const loading = document.getElementById('daily-uploads-chart-loading');
+             const errorDiv = document.getElementById('daily-uploads-chart-error');
+            if (!canvas) return;
+             showLoading('daily-uploads-chart-loading');
+             hideError('daily-uploads-chart-error');
+            try {
+                // Reusing the uploads_over_time endpoint and processing data for daily totals
+                const response = await fetch(`${BACKEND_URL}/admin/analytics/uploads_over_time`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+                const chartData = await response.json(); // This data is grouped by user and date
+
+                // Aggregate data by date to get total uploads per day
+                const dailyCounts = {};
+                const allDates = new Set();
+                if (chartData && chartData.datasets) {
+                    chartData.datasets.forEach(dataset => {
+                        dataset.data.forEach((count, index) => {
+                            const date = chartData.labels[index]; // Get date from labels
+                            dailyCounts[date] = (dailyCounts[date] || 0) + count;
+                            allDates.add(date);
+                        });
+                    });
+                }
+
+                const sortedDates = Array.from(allDates).sort();
+                const dailyData = sortedDates.map(date => dailyCounts[date] || 0);
+
+                 if (!sortedDates || sortedDates.length === 0 || dailyData.reduce((sum, count) => sum + count, 0) === 0) {
+                      showError('daily-uploads-chart-error', 'No data available for Uploads per Day chart.');
+                      canvas.style.display = 'none';
+                      if (dailyUploadsChartInstance) dailyUploadsChartInstance.destroy();
+                      return;
+                 }
+
+
+                const ctx = canvas.getContext('2d');
+                if (dailyUploadsChartInstance) dailyUploadsChartInstance.destroy();
+                dailyUploadsChartInstance = new Chart(ctx, {
+                    type: 'bar', // Changed to bar chart
+                    data: {
+                        labels: sortedDates,
+                        datasets: [{
+                            label: 'Total Uploads per Day',
+                            data: dailyData,
+                             backgroundColor: 'rgba(54, 162, 235, 0.6)', // Example blue color
+                             borderColor: 'rgba(54, 162, 235, 1)',
+                             borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: false, // Keep fixed size
+                        maintainAspectRatio: false, // Keep fixed size
+                        plugins: {
+                            legend: {
+                                display: false // Hide legend as there's only one dataset
+                            },
+                             title: {
+                                display: false, // Hide default Chart.js title since we have an H4
+                             },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                         scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { precision: 0, font: { size: 9 } }, // Smaller Y-axis font
+                                title: {
+                                    display: true,
+                                    text: 'Uploads',
+                                    font: { size: 10 } // Smaller title font
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Date',
+                                     font: { size: 10 } // Smaller title font
+                                },
+                                ticks: { font: { size: 9 } } // Smaller X-axis font
+                            }
+                        }
+                    }
+                });
+                 canvas.style.display = '';
+            } catch (error) {
+                console.error("Error loading daily uploads chart:", error);
+                 canvas.style.display = 'none';
+                 showError('daily-uploads-chart-error', `Failed to load chart: ${error.message}`);
+            } finally {
+                 loading.classList.add('hidden');
+            }
+        }
+
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+            checkAuthAndFetchSession(); // Check session for UI state
+
+            // Set default tab to Dashboard after a short delay to ensure elements are ready
+            setTimeout(() => {
+                 openTab(null, 'tab-dashboard');
+            }, 50);
+
+
+            // Add event listeners for search input
+            const userSearchInput = document.getElementById('user-search');
+            if (userSearchInput) {
+                userSearchInput.addEventListener('input', debounce(loadUsers, 300));
+            }
+
+            const fileSearchInput = document.getElementById('file-search');
+             if (fileSearchInput) {
+                 fileSearchInput.addEventListener('input', debounce(() => loadFiles(1), 300)); // Debounce file search
+             }
+        });
+
+        // Helper function to escape HTML for safe display
+        function escapeHtml(unsafe) {
+            if (typeof unsafe !== 'string') {
+                 if (unsafe === null || typeof unsafe === 'undefined') return '';
+                 try { return String(unsafe); } catch (e) { return ''; }
+            }
+            return unsafe
+                 .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+    </script>
 </body>
 </html>
