@@ -1,9 +1,11 @@
 # 📚 Archive Mosaic - Cultural Heritage Digital Archiving Platform
 
 ### 👩‍💻 Developed by:
-- **Meenakshi** - Roll No: 2301730144  
+
+- **Meenakshi** - Roll No: 2301730144 
 - **Poonam** - Roll No: 2301730160  
-- **Divanshi Tyagi** - Roll No: 2301730169  
+- **Divanshi Tyagi** - Roll No: 2301730169
+**(BTECH CSE- AI/ML) SECTION-C**  
 
 ---
 ## 📌 Project Overview
@@ -70,18 +72,16 @@ It allows users and organizations to **upload**, **categorize**, and **store** c
 │       ├── signin.js
 │       └── signup.js
 
-├── templates/                   # HTML templates
-│   ├── aboutus.html
-│   ├── access_denied.html
-│   ├── admin_dashboard.html
-│   ├── gallery.html
-│   ├── main.html
-│   ├── signin.html
-│   ├── signup.html
-│   └── upload.html
+├── templates/                   # HTML templates for rendering pages
+│   ├── aboutus.html             # About Us page
+│   ├── access_denied.html       # Role-restricted access page
+│   ├── admin_dashboard.html     # Admin control panel
+│   ├── gallery.html             # Public display of uploaded content
+│   ├── main.html                # Home or landing page
+│   ├── signin.html              # User login page
+│   ├── signup.html              # User registration page
+│   └── upload.html              # Upload form with metadata
 
-
----
 
 ## ⚙️ Installation and Setup
 
