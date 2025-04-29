@@ -1,177 +1,135 @@
-# Meenakshi_RakeshPai_CSE-AI-ML-C_DigitalArchivingOfCulturalData
+# 📚 Archive Mosaic - Cultural Heritage Digital Archiving Platform
 
-Archive Mosaic - Cultural Heritage Digital Platform
-Overview
-Archive Mosaic is a secure, scalable, and user-friendly digital platform built to archive and preserve diverse forms of cultural heritage. It enables users and organizations to upload, categorize, and store traditional dances, music, art, manuscripts, and other culturally significant materials. Our platform ensures that these valuable assets remain accessible, organized, and protected for future generations.
+### 👩‍💻 Developed by:
+- **Meenakshi** - Roll No: 2301730144  
+- **Poonam** - Roll No: 2301730160  
+- **Divanshi Tyagi** - Roll No: 2301730169  
 
-Features Implemented ✅
-1. User Authentication
-Firebase Authentication is used for secure sign-in and sign-up.
+---
+## 📌 Project Overview
 
-Role-based Access Control:
+**Archive Mosaic** is a secure, scalable, and user-friendly web application designed to preserve, organize, and share culturally significant materials such as traditional dances, music, art, manuscripts, and more. It is ideal for digital archiving platforms, art repositories, and cultural preservation initiatives. 
+It allows users and organizations to **upload**, **categorize**, and **store** cultural assets with rich metadata, ensuring these treasures remain accessible, organized, and protected for future generations.
 
-Users are assigned roles (user or admin) upon registration.
+---
 
-Role-based dynamic routing ensures users are directed to the appropriate dashboard.
+## 🛠️ Technologies Used
+- **Frontend**: HTML, CSS, JavaScript (with Bootstrap for responsiveness)
+- **Backend**: Python (Flask Framework)
+- **Authentication**: Firebase Authentication (Role-based access control)
+- **Database**: MongoDB with GridFS for file storage
+- **AI Integration**: meta-llama/Llama-Vision-Free (via Together API) for automatic image captioning
+- **Other Tools**: JSON Web Tokens (JWT) for secure session management
 
-Session Management:
+---
 
-Secure sessions managed using JWT (JSON Web Tokens) for encrypted authentication.
+## 🚀 Features
 
-2. User Management
-User Dashboard:
+### ✅ Completed
 
-Submit new cultural artifact records (images, videos, PDFs).
+- 🔐 Firebase Authentication (Sign In, Sign Up, Forgot Password)
+- 👥 Role-Based Access Control (Admin/User)
+- 🖼️ Upload Page: Supports image, video, PDF uploads
+- 📝 Metadata Entry: Title, description, date, language, state, tags, category, and uploader name
+- 🧠 Integration with Meta-LLaMA Vision for AI-based Image Captioning
+- 💾 MongoDB + GridFS to store files and metadata
+- 📅 Automatic upload date recording
+- 👩‍💼 Admin Dashboard:
+  - View and manage all users
+  - Edit/delete users or promote/demote roles
+- 📤 User Dashboard:
+  - View, edit, delete their own uploads
+- 📚 About Us page and full frontend navigation
+- 🖼️ Gallery to browse all uploaded content
+- 🔍 Filtering by categories and metadata (for efficient discovery)
 
-Edit or delete only their own submissions.
+---
 
-Admin Dashboard:
+## 📋 Project Flow
 
-View all users and their uploads.
+1. **User signs up** → Role assigned → Login with secure session via JWT
+2. **User uploads** a file + metadata → Stored securely in MongoDB using GridFS
+3. **AI Model** automatically generates image captions (optional for user input)
+4. **Gallery** displays uploads → Filters and search enable easy browsing
+5. **Admin Management** → Full control over users and content
 
-Edit or delete any user account.
+---
 
-Manage user roles (upgrade user to admin, restrict access).
+## 📦 Folder Structure
 
-3. Uploading and Metadata
-Upload Page:
+├── app.py                        # Main Flask application
+├── serviceAccountKey.json       # Firebase Admin SDK service account key
 
-Supports images, videos, and PDFs.
+├── static/                      # Static assets
+│   ├── css/
+│   │   ├── aboutus.css
+│   │   └── upload.css
+│   ├── images/
+│   │   └── background.jpeg
+│   └── javascript/
+│       ├── signin.js
+│       └── signup.js
 
-Allows manual metadata entry (e.g., title, description, author, category).
+├── templates/                   # HTML templates
+│   ├── aboutus.html
+│   ├── access_denied.html
+│   ├── admin_dashboard.html
+│   ├── gallery.html
+│   ├── main.html
+│   ├── signin.html
+│   ├── signup.html
+│   └── upload.html
 
-MongoDB:
 
-All uploads and metadata are securely stored in a MongoDB database.
+---
 
-4. Media Gallery
-Gallery Page:
+## ⚙️ Installation and Setup
 
-Displays uploaded artifacts.
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/ArchiveMosaic.git
+   cd ArchiveMosaic
+   ```
 
-Responsive and user-friendly design.
+2. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-Filtering and Search:
+3. **Set up Firebase Authentication**
+   - Create a Firebase project
+   - Enable Email/Password Sign-In
+   - Download your `serviceAccountKey.json` and include it in the project
 
-Users can search and filter uploads based on metadata fields.
+4. **Set up MongoDB**
+   - Create a MongoDB Atlas cluster or local MongoDB instance
+   - Create a database and configure GridFS
 
-5. AI Integration
-Image Captioning Model:
+5. **Configure API Keys**
+   - Set Together API Key for AI model
+   - Configure Firebase project credentials
 
-Integrated meta-llama/Llama-Vision-Free model via Together API.
+6. **Run the application**
+   ```bash
+   python app.py
+   ```
 
-Automatically generates structured image captions (Title + Description) during upload.
+7. **Access the Web App**
+   - Open `http://127.0.0.1:5000/` in your browser
 
-Captions are stored alongside manual metadata to enrich the archive.
+---
 
-6. Password Recovery
-Forgot Password Feature:
+## 📥 Future Scope
 
-Secure password reset link sent via email.
+- Advanced search and sort options using AI.
+- Export metadata as CSV/JSON for institutional use.
+- Public user profiles and contribution history.
+- Language localization for Indian regional languages.
 
-Allows users to create a new password safely.
+---
 
-7. Frontend Pages
-Sign In / Sign Up Pages (with role assignment).
+## 🙌 Thank You!
 
-About Us Section (responsive design).
+We hope **Archive Mosaic** will contribute meaningfully to preserving our cultural heritage.
 
-Smooth Navigation between all pages.
 
-Technologies Used 🛠️
-
-Category	Technology/Service
-Frontend	HTML, CSS, Bootstrap
-Backend	Python (Flask)
-Authentication	Firebase Authentication
-Database	MongoDB (Atlas)
-AI Integration	meta-llama/Llama-Vision-Free (Together API)
-Session Control	JWT (JSON Web Tokens)
-Hosting (optional)	Can be deployed on Render/Heroku etc.
-Project Structure 📁
-lua
-Copy
-Edit
-/archive-mosaic
-|-- /templates
-|    |-- login.html
-|    |-- signup.html
-|    |-- dashboard_user.html
-|    |-- dashboard_admin.html
-|    |-- upload.html
-|    |-- gallery.html
-|    |-- forgot_password.html
-|-- /static
-|    |-- css/
-|    |-- js/
-|    |-- images/
-|-- app.py
-|-- requirements.txt
-|-- README.md
-Setup Instructions ⚙️
-Clone the Repository
-
-bash
-Copy
-Edit
-git clone https://github.com/your-username/archive-mosaic.git
-cd archive-mosaic
-Install Dependencies
-
-bash
-Copy
-Edit
-pip install -r requirements.txt
-Set up Firebase
-
-Create a Firebase project.
-
-Enable Email/Password Authentication.
-
-Download the firebase-adminsdk JSON and set up the necessary environment variables.
-
-Set up MongoDB
-
-Create a MongoDB Atlas cluster.
-
-Update MongoDB URI in your app.py.
-
-Environment Variables
-
-ini
-Copy
-Edit
-FLASK_SECRET_KEY=your_secret_key
-FIREBASE_API_KEY=your_firebase_api_key
-FIREBASE_PROJECT_ID=your_project_id
-MONGODB_URI=your_mongodb_uri
-Run the Application
-
-bash
-Copy
-Edit
-python app.py
-Access
-
-Visit http://localhost:5000 to access the application.
-
-Pending Work (Optional Future Enhancements) 🛠️
-(All current planned tasks are completed. These are just ideas for future expansion.)
-
-Improve UI/UX with Material UI or Tailwind.
-
-Multi-language support (for global cultural data).
-
-Public Gallery (view-only access without login).
-
-Advanced AI features (tag suggestions, OCR for manuscripts).
-
-Analytics dashboard for Admin (number of uploads, user growth, etc.)
-
-Credits 🙏
-Developed by: Meenakshi
-
-Special thanks to the Firebase, MongoDB, and Together API communities for their excellent services.
-
-License 📜
-This project is licensed under the MIT License.
