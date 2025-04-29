@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Stylish File Upload System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+
+    body { background: wheat;
+       min-height: 100vh;
+       display: flex;
+       flex-direction: column; 
+       align-items: center; 
+       padding: 30px; }
+    .navbar { width: 100%; background: rgb(187, 60, 13); display: flex; justify-content: center; gap: 40px; padding: 15px; margin-bottom: 30px; border-radius: 12px; height: 10vh; margin-top: 0; }
+    .navbar a { color: white; text-decoration: none; font-weight: 600; font-size: 18px; transition: color 0.3s; }
+    .navbar a:hover { color: #ffdd57; }
+    .upload-container { background: #fff; padding: 30px; border-radius: 15px; box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.1); width: 90%; max-width: 600px; text-align: center; transition: 0.3s; }
+    .upload-box { background: #f0f0f0; border-radius: 12px; padding: 40px 20px; cursor: pointer; border: 2px dashed #aaa; transition: background 0.3s, border-color 0.3s; }
+    .upload-box:hover { background: #dceeff; border-color: #0077cc; }
+    #selected-filename { margin-top: 10px; font-weight: 500; color: #333; }
+    #uploadButton, #postButton { margin-top: 20px; padding: 12px 25px; font-size: 16px; font-weight: 600; background: #0077cc; color: white; border: none; border-radius: 8px; cursor: pointer; transition: background 0.3s; display: none; }
+    #uploadButton:hover, #postButton:hover { background: #005fa3; }
+    .image-preview { margin-top: 20px; width: 200px; height: auto; border-radius: 12px; object-fit: cover; }
+    .metadata-form { margin-top: 20px; display: none; text-align: left; }
+    .metadata-form label { display: block; margin-top: 15px; font-weight: 600; }
+    .metadata-form input, .metadata-form textarea { width: 100%; padding: 10px; margin-top: 5px; border: 2px solid #ccc; border-radius: 8px; transition: border-color 0.3s; }
+    .metadata-form input:focus, .metadata-form textarea:focus { border-color: #0077cc; outline: none; }
+    #uploadMessage { margin-top: 20px; font-size: 18px; color: green; font-weight: 600; display: none; animation: pop 0.6s ease forwards; }
+    @keyframes pop { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .file-preview { margin-top: 30px; }
+    .file-preview img, .file-preview video { width: 100%; max-width: 250px; margin-top: 10px; border-radius: 12px; }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <a href="/">Home</a>
+    <a href="/upload">Upload</a>
+    <a href="/gallery">Gallery</a>
+    <a href="/logout">Logout</a>
+    
+  </div>
+  <div class="upload-container" id="uploadContainer">
+    <div class="file-preview" id="fileList"></div>
+  </div>
+  <script>
+    const API_URL = "http://127.0.0.1:5000";
+    window.onload = async function () { loadFiles(); };
+    async function loadFiles() {
+      const fileList = document.getElementById("fileList");
+      fileList.innerHTML = "";
+      try {
+        const response = await fetch(`${API_URL}/files/list`);
+        const files = await response.json();
+        files.forEach(file => {
+          const div = document.createElement("div");
+          let preview = "";
+          if (file.filename.match(/\.(jpg|png|gif)$/i)) {
+            preview = `<img src="${API_URL}/files/download/${file.file_id}" class="image-preview" />`;
+          } else if (file.filename.match(/\.(mp4|avi|mov)$/i)) {
+            preview = `<video class="video-preview" controls>
+                        <source src="${API_URL}/files/download/${file.file_id}" />
+                      </video>`;
+          }
+          div.innerHTML = `
+            <div>
+              ${preview}
+              <p><strong>Title:</strong> ${file.title || "No title available"}</p>
+              <p><strong>Description:</strong> ${file.description || "No description available"}</p>
+              <p><strong>Language:</strong> ${file.language || "No language specified"}</p>
+              <p><strong>State:</strong> ${file.state || "No state affiliation"}</p>
+              <p><strong>Category:</strong> ${file.category || "No category specified"}</p>
+              <p><strong>Tags:</strong> ${file.tags || "No tags available"}</p>
+              <button onclick="downloadFile('${file.file_id}')">Download</button>
+              <button onclick="deleteFile('${file.file_id}')">Delete</button>
+            </div>
+          `;
+          fileList.appendChild(div);
+        })
+      } catch (error) { console.error("Error loading gallery:", error); }
+    }
+    function downloadFile(fileId) { window.location.href = `${API_URL}/files/download/${fileId}`; }
+    async function deleteFile(fileId) {
+      if (!confirm("Are you sure you want to delete this file?")) return;
+      try {
+        const response = await fetch(`${API_URL}/files/delete/${fileId}`, { method: "DELETE" });
+        if (response.ok) {
+          alert("File deleted successfully!");
+          loadFiles();
+        } else { alert("Deletion failed"); }
+      } catch (error) { console.error("Error deleting file:", error); }
+    }
+  </script>
+</body>
+</html>
