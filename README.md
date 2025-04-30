@@ -128,6 +128,9 @@ It allows users and organizations to **upload**, **categorize**, and **store** c
 
 ---
 
+Mid term Presentation Video:
+https://youtu.be/3DzJSfniYt4?si=Pk4NfO5igd1oIcNT
+
 ## 🙌 Thank You!
 
 We hope **Archive Mosaic** will contribute meaningfully to preserving our cultural heritage.
