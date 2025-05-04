@@ -131,7 +131,6 @@ It allows users and organizations to **upload**, **categorize**, and **store** c
 Mid term Presentation Video:
 https://youtu.be/3DzJSfniYt4?si=Pk4NfO5igd1oIcNT
 
-Final ppt:
 
 
 ## 🙌 Thank You!
