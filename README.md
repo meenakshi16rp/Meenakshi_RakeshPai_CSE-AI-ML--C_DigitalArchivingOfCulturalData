@@ -3,9 +3,6 @@
 ### 👩‍💻 Developed by:
 
 - **Meenakshi** - Roll No: 2301730144 
-- **Poonam** - Roll No: 2301730160  
-- **Divanshi Tyagi** - Roll No: 2301730169
-**(BTECH CSE- AI/ML) SECTION-C**
   
 Mid term Presentation Video:
 https://youtu.be/3DzJSfniYt4?si=Pk4NfO5igd1oIcNT
