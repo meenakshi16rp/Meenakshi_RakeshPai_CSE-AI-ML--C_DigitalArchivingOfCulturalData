@@ -1,8 +1,4 @@
 # 📚 Archive Mosaic - Cultural Heritage Digital Archiving Platform
-
-### 👩‍💻 Developed by:
-
-- **Meenakshi** - Roll No: 2301730144 
   
 Mid term Presentation Video:
 https://youtu.be/3DzJSfniYt4?si=Pk4NfO5igd1oIcNT
